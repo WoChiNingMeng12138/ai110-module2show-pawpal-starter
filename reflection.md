@@ -4,13 +4,23 @@
 
 **a. Initial design**
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+- My initial UML design separated the PawPal+ system into three main parts: data models, scheduling logic, and the Streamlit user interface. The goal was to keep the core scheduling logic independent from the UI so that it would be easier to test and maintain.
+
+The main classes in my design were:
+
+Owner: Stores basic information about the pet owner.
+Pet: Stores information about the pet, including the pet's name, species, age, and any special notes.
+CareTask: Represents a pet care task. Each task includes a name, category, duration, priority, and whether the task is required.
+Scheduler: Contains the main scheduling logic. It sorts tasks based on priority and checks whether each task can fit within the owner’s available time.
+DailyPlan: Stores the final generated plan, including scheduled tasks, skipped tasks, and the total time used.
+ScheduleItem: Represents one task placed into the daily schedule, including its start and end time.
+PlanExplanation: Stores the reasoning behind the generated plan, such as why certain tasks were selected or skipped.
+
+In this design, the user enters owner, pet, and task information through the Streamlit interface. The UI then sends that information to the Scheduler, which generates a DailyPlan. The final plan and explanation are displayed back to the user.
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+- My design changed slightly during implementation. I planned to add a skipped_tasks list to the DailyPlan class. In the initial design, I only planned to store scheduled tasks. During implementation, I realized that skipped tasks were important because the app needs to explain why some tasks were not included.
 
 ---
 
