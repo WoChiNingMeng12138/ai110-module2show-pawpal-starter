@@ -63,17 +63,33 @@ Paste a sample of your app's CLI or Streamlit output here so a reader can see wh
 
 ```bash
 # Run the full test suite:
-pytest
+python -m pytest
 
 # Run with coverage:
 pytest --cov
 ```
 
+The suite covers the three areas most likely to break silently in a scheduler with sorting and recurring tasks:
+
+- **Sorting correctness** — `Scheduler.sort_tasks()` orders required-before-optional then by priority (including the empty-list edge case), and `Scheduler.sort_by_time()` orders by `preferred_time` with tasks missing a preferred time sorted last.
+- **Recurrence logic** — completing a `"daily"`/`"weekly"` task creates a next occurrence due 1/7 days later and appends it to the pet's task list, while a `"once"` task creates nothing.
+- **Conflict detection** — `DailyPlan.has_conflict()` and `Scheduler.detect_conflicts()` correctly flag true overlaps (same-pet and cross-pet) but not back-to-back or non-overlapping items, and a pet with no tasks produces an empty plan without crashing.
+
 Sample test output:
 
 ```
-# Paste your pytest output here
+============================================================================ test session starts ============================================================================
+platform win32 -- Python 3.14.0, pytest-9.0.3, pluggy-1.6.0
+rootdir: F:\UniversityDocument\US_TAMU\2026_Summer\Interview\ai110-module2show-pawpal-starter
+plugins: anyio-4.13.0
+collected 18 items
+
+test\test_pawpal.py ..................                                                                                                                                 [100%]
+
+============================================================================= 18 passed in 0.03s =============================================================================
 ```
+
+**Confidence level: 4/5 stars.** All 18 tests pass, and the core sorting, recurrence, and conflict-detection paths are verified — including edge cases like empty task lists and boundary-touching time slots. The point held back from 5/5: while writing these tests we found that the fixed-time conflict-skip branch inside `Scheduler.generate_plan()` is currently unreachable in practice, since `current_time` only ever advances forward, two fixed-time tasks requested at the same slot get staggered automatically instead of ever hitting that skip path. That's not an incorrect result, just an untested/dead code path worth a closer look before calling the scheduler fully verified.
 
 ## 📐 Smarter Scheduling
 
