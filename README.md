@@ -77,14 +77,14 @@ Sample test output:
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
-
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Sorting by priority | `Scheduler.sort_tasks()` | Sorts `(pet, task)` pairs required-first, then by `priority` (1 = highest). Used for tasks with no fixed time. |
+| Sorting by time | `Scheduler.sort_by_time()` | Sorts `(pet, task)` pairs by `Task.preferred_time` ("HH:MM" string, zero-padded so lexicographic order = chronological order). Tasks with no `preferred_time` sort last. Used to place fixed-time tasks in the day before flexible ones. |
+| Filtering by pet / status | `Owner.filter_tasks(pet_name=None, completed=None)` | Single method that filters by pet name and/or completion status (either, both, or neither). `Owner.get_tasks_by_pet()` / `Owner.get_tasks_by_status()` and `Pet.get_tasks_by_status()` are thin wrappers over it for convenience. |
+| Filtering by fit | `Scheduler.can_fit()` | Skips a task (adds it to `DailyPlan.skipped_tasks`) once the owner's remaining available minutes can't cover its duration. |
+| Conflict detection | `Scheduler.detect_conflicts()`, `Scheduler._format_conflict()`, `DailyPlan.has_conflict()` | `detect_conflicts()` sweeps schedule items sorted by start time and reports every time overlap as a warning string — same-pet ("double-booked") and cross-pet ("schedule conflict between pets") are worded differently. It never raises; malformed items are filtered out rather than crashing the whole check. `generate_plan()` calls it automatically and stores the result on `DailyPlan.warnings`. `has_conflict()` is the simpler pairwise check `generate_plan()` uses while placing fixed-time tasks, to skip/shift a task before it's even added. |
+| Recurring tasks | `Task.is_due()`, `Task.create_next_occurrence()`, `Pet.mark_task_complete()` | `Task.frequency` is `"daily"`, `"weekly"`, or `"once"`. `is_due(date)` checks whether an occurrence still needs doing on a given date. `Pet.mark_task_complete(task, date)` marks the task done and, for `"daily"`/`"weekly"` tasks, calls `create_next_occurrence()` (via `datetime.timedelta`) to append a fresh `Task` due 1 or 7 days later — so completing a recurring task automatically schedules its next occurrence. |
 
 ## 📸 Demo Walkthrough
 

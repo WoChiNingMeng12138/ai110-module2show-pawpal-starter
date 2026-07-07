@@ -32,9 +32,7 @@ In this design, the user enters owner, pet, and task information through the Str
 - How did you decide which constraints mattered most?
 
 **b. Tradeoffs**
-
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+- generate_plan uses a greedy algorithm: fixed-time tasks are scheduled chronologically and claim their slots sequentially, while flexible tasks are sorted by requirements or priority and slotted into the nearest available gaps. It does not backtrack, for instance, it won't displace and reschedule already-placed low-priority tasks to accommodate a high-priority, time-intensive one. This approach yields O(n log n) performance, but the trade-off is that, in certain scenarios, the resulting schedule may not maximize daily time utilization—it simply appears "reasonable."
 
 ---
 
