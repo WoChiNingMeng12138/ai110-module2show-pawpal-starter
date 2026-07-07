@@ -22,6 +22,16 @@ Your final app should:
 - Display the plan clearly (and ideally explain the reasoning)
 - Include tests for the most important scheduling behaviors
 
+## ✨ Features
+
+- **Priority-based sorting** — flexible (no fixed time) tasks are ordered required-first, then by priority (1 = highest), so the most important care never gets bumped by a low-priority extra.
+- **Sort by time** — tasks with a fixed `preferred_time` (e.g. "give meds at 08:30") are placed on the day in chronological order before any flexible task is considered.
+- **Daily / weekly recurrence** — marking a `"daily"` or `"weekly"` task complete automatically creates its next occurrence (due 1 or 7 days later); `"once"` tasks simply stay done.
+- **Time-budget fitting** — each task is checked against the owner's remaining `available_minutes` before it's placed; anything that doesn't fit is recorded as skipped rather than silently dropped.
+- **Conflict warnings** — the scheduler flags real time overlaps, both when the same pet is double-booked and when two different pets' tasks collide, without ever crashing on malformed data.
+- **Plan explanations** — every scheduling decision (scheduled, skipped for time, skipped as not-yet-due, skipped for conflict) is recorded as a human-readable reason you can review alongside the plan.
+- **Filtering** — tasks can be filtered by pet, by completion status, or both, for reviewing a single pet's to-do list or everything still outstanding.
+
 ## Getting started
 
 ### Setup
@@ -104,12 +114,94 @@ test\test_pawpal.py ..................                                          
 
 ## 📸 Demo Walkthrough
 
-Describe your app in numbered steps so a reader can follow along without watching a video:
+### Main UI features
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+- **Owner panel** — set the owner's name, available minutes for the day, and preferred start/end time; these drive how much the scheduler can fit and where the day begins.
+- **Adding a Pet** — register a pet (name, species, age, notes); the app tracks any number of pets per owner.
+- **Scheduling a Task** — add a task for a pet with duration, priority, frequency (`daily`/`weekly`/`once`), whether it's required, and an optional fixed `preferred_time`.
+- **Tasks panel** — filter the task list by pet and/or completion status, see it sorted the same way the scheduler will treat it (required-first, then priority), and mark any task complete — completing a recurring task immediately shows when its next occurrence is due.
+- **Build Schedule** — generate the day's plan on demand and see the scheduled items, anything that was skipped (and why), and any conflict warnings.
+
+### Example workflow
+
+1. **Add a pet** — e.g. add "Mochi" the dog.
+2. **Schedule tasks** — add "Morning walk" (priority 1, fixed time 09:00), "Give medication" (priority 1, daily), and an optional "Play time" (priority 3, flexible).
+3. **Review the task list** — filter to Mochi's incomplete tasks and confirm they're sorted required-first, then by priority.
+4. **Generate today's schedule** — click "Generate schedule" and see the fixed-time tasks anchor the day, flexible tasks fill the remaining gaps, and any task that couldn't fit listed under skipped tasks.
+5. **Mark a task complete** — mark "Give medication" done; since it's `daily`, PawPal+ automatically adds a fresh occurrence due the next day.
+
+### Scheduler behaviors surfaced in the UI
+
+- **Sorting** — the Tasks panel lists tasks in the exact required→priority order the scheduler uses, so what you see is what gets scheduled first.
+- **Conflict warnings** — if two tasks end up overlapping, each overlap is shown as its own `st.warning`, naming both tasks and pets involved (same-pet "double-booked" vs. cross-pet "schedule conflict").
+- **Skipped tasks** — tasks that don't fit the remaining time (or aren't due yet) are called out separately from the scheduled list, so nothing silently disappears.
+- **Explanation** — an expandable "Why this plan?" section lists the reasoning behind every scheduling decision.
+
+### Sample CLI output (`python main.py`)
+
+`main.py` is a manual test harness that exercises the backend directly — no UI — useful for sanity-checking sorting, recurrence, and conflict detection from the command line.
+
+```
+=== Auto-created next occurrences after mark_task_complete ===
+Give medication -> next due 2026-07-07 (completed=False)
+Play time       -> next due 2026-07-07 (completed=False)
+=== All tasks sorted by time (sort_by_time) ===
+08:00  Luna: Feed breakfast
+08:30  Mochi: Give medication
+08:30  Mochi: Give medication
+09:00  Mochi: Morning walk
+09:00  Mochi: Brush fur
+09:00  Luna: Litter box cleanup
+18:00  Mochi: Evening walk
+(none)  Luna: Play time
+(none)  Luna: Play time
+
+=== All tasks sorted by required/priority (sort_tasks) ===
+priority=1  required=True  Mochi: Morning walk
+priority=1  required=True  Mochi: Give medication
+priority=1  required=True  Mochi: Give medication
+priority=2  required=True  Mochi: Evening walk
+priority=2  required=True  Mochi: Brush fur
+priority=2  required=True  Luna: Feed breakfast
+priority=2  required=True  Luna: Litter box cleanup
+priority=3  required=True  Luna: Play time
+priority=3  required=True  Luna: Play time
+
+=== Today's Schedule (2026-07-06) ===
+Plan for 2026-07-06 (70 min scheduled)
+08:00-08:15  Luna: Feed breakfast
+09:00-09:30  Mochi: Morning walk
+09:30-09:45  Mochi: Brush fur
+09:45-09:55  Luna: Litter box cleanup
+Skipped:
+  Mochi: Evening walk
+
+=== Explanation ===
+Skipped 'Give medication' for Mochi: not due yet (frequency=daily).
+Skipped 'Give medication' for Mochi: not due yet (frequency=daily).
+Skipped 'Play time' for Luna: not due yet (frequency=daily).
+Skipped 'Play time' for Luna: not due yet (frequency=daily).
+Scheduled 'Feed breakfast' for Luna at 08:00 (fixed time, priority 2).
+Scheduled 'Morning walk' for Mochi at 09:00 (fixed time, priority 1).
+Scheduled 'Brush fur' for Mochi at 09:30 (fixed time, priority 2).
+Scheduled 'Litter box cleanup' for Luna at 09:45 (fixed time, priority 2).
+Skipped 'Evening walk' for Mochi: not enough time remaining.
+
+=== Conflict warnings on a manually double-booked plan ===
+Warning: Mochi is double-booked - 'Morning walk' (09:00-09:30) overlaps 'Brush fur' (09:00-09:15).
+Warning: schedule conflict between pets - Mochi's 'Morning walk' (09:00-09:30) overlaps Luna's 'Litter box cleanup' (09:10-09:20).
+Warning: schedule conflict between pets - Mochi's 'Brush fur' (09:00-09:15) overlaps Luna's 'Litter box cleanup' (09:10-09:20).
+
+=== Tomorrow's Schedule (2026-07-07) ===
+Plan for 2026-07-07 (80 min scheduled)
+08:00-08:15  Luna: Feed breakfast
+08:30-08:40  Mochi: Give medication
+09:00-09:30  Mochi: Morning walk
+09:30-09:45  Mochi: Brush fur
+09:45-09:55  Luna: Litter box cleanup
+Skipped:
+  Mochi: Evening walk
+  Luna: Play time
+```
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->

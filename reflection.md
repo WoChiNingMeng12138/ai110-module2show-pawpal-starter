@@ -28,8 +28,19 @@ In this design, the user enters owner, pet, and task information through the Str
 
 **a. Constraints and priorities**
 
-- What constraints does your scheduler consider (for example: time, priority, preferences)?
-- How did you decide which constraints mattered most?
+- My scheduler considers several constraints:
+
+- The owner’s total available minutes.
+- The owner’s preferred start and end time.
+- Whether a task is required or optional.
+- The task’s priority level.
+- The task’s duration.
+- Whether the task has a preferred time.
+- Whether the task is due on the selected date.
+- Whether the task has already been completed.
+- Conflicts between scheduled items.
+
+- I decided that required tasks and due tasks should matter most because they represent essential pet care needs. After that, the scheduler considers priority, because higher-priority tasks should be scheduled before lower-priority ones.
 
 **b. Tradeoffs**
 - generate_plan uses a greedy algorithm: fixed-time tasks are scheduled chronologically and claim their slots sequentially, while flexible tasks are sorted by requirements or priority and slotted into the nearest available gaps. It does not backtrack, for instance, it won't displace and reschedule already-placed low-priority tasks to accommodate a high-priority, time-intensive one. This approach yields O(n log n) performance, but the trade-off is that, in certain scenarios, the resulting schedule may not maximize daily time utilization—it simply appears "reasonable."
@@ -40,13 +51,17 @@ In this design, the user enters owner, pet, and task information through the Str
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+- I used AI tools during several stages of the project, but I did not treat AI as the final decision-maker. I used it mainly as a brainstorming partner, debugging helper, and design reviewer.
+
+The most helpful prompts were specific prompts that included my current design and asked for targeted feedback. For example, instead of asking “How do I build a scheduler?”, I asked questions like: “Given these classes, what edge cases should I test for my greedy scheduling algorithm?” or “Does this method belong in Scheduler or DailyPlan?”
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+- One moment where I did not accept an AI suggestion as-is was when AI suggested making the scheduler more complex by using backtracking or a more advanced optimization approach. While that could produce a more optimal schedule, I decided not to use it because it would make the system harder to understand and harder to explain in the project reflection.
+
+- I also rejected suggestions to add too many extra classes, such as notification classes, database classes, or calendar-sync classes. Those features could be useful in a larger real-world app, but they were outside the scope of this project.
+
+- To evaluate AI suggestions, I checked whether each suggestion matched my UML design, whether it made the code simpler or more complicated, and whether I could test it clearly.
 
 ---
 
@@ -54,13 +69,13 @@ In this design, the user enters owner, pet, and task information through the Str
 
 **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+- I just test sorting correctness, recurrence logic and conflict detection and scheduling.
+- These three areas contain the only "hidden logic" in the entire scheduler—sorting rules, date calculations, and time overlap checks are prone to errors at edge cases. Such errors often don't crash the program but instead silently produce incorrect schedules (e.g., missed tasks, duplicate tasks, or failure to flag a conflict), making automated testing essential rather than relying on manual inspection.
 
 **b. Confidence**
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+- I am fairly confident that my scheduler works correctly for the main use cases, especially simple daily schedules with multiple pets and different task priorities. I am also confident that the system can explain skipped tasks and avoid obvious scheduling conflicts.
+- I would like to test the empty input (pets with no tasks) or boundary values ​​(times meeting exactly end-to-end)—are easily overlooked during development but represent real-world scenarios users will encounter
 
 ---
 
@@ -68,12 +83,12 @@ In this design, the user enters owner, pet, and task information through the Str
 
 **a. What went well**
 
-- What part of this project are you most satisfied with?
+- The part I am most satisfied with is the separation between the data model and the scheduling logic. Classes like Owner, Pet, and Task store information, while Scheduler focuses on generating the plan. This made the system easier to understand and debug. I am also satisfied with adding PlanExplanation and skipped_tasks. These features make the app more transparent.
 
 **b. What you would improve**
 
-- If you had another iteration, what would you improve or redesign?
+- If I had another iteration, I would improve the scheduler to handle more complex conflicts. For example, I could allow the scheduler to rearrange lower-priority flexible tasks if doing so would make room for an important required task. This would make the schedule closer to optimal, although it would also make the algorithm more complex.
 
 **c. Key takeaway**
 
-- What is one important thing you learned about designing systems or working with AI on this project?
+- One important thing I learned is that system design is about choosing clear responsibilities and making tradeoffs. A more complex algorithm is not always better if it makes the system harder to understand, test, or explain. For this project, a simple greedy scheduler was a good choice because it matched the project scope and made the behavior easier to reason about.
